@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Code, ShoppingCart, Megaphone, PenTool, Film, MonitorPlay, Brush } from "lucide-react";
-
+import { AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 
 
 const testimonials = [
@@ -110,73 +111,151 @@ const services = [
 ];
 
 export default function HeroSection() {
-    const [isHovered, setIsHovered] = useState(false);
 
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Track mouse position
+      const [isHovered, setIsHovered] = useState(false);
+
+
+  // Navbar scroll effect
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Mouse light effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) =>
       setMousePos({ x: e.clientX, y: e.clientY });
-    };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   return (
     <div>
-    <div className="relative h-screen bg-gradient-to-b from-black via-[#0a0f2c] to-[#0d1b4c] overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-b from-black via-[#0a0f2c] to-[#0d1b4c] overflow-hidden">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
       {/* Mouse highlight effect */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none transition-all duration-75 ease-linear"
         style={{
           background: `radial-gradient(200px at ${mousePos.x}px ${mousePos.y}px, rgba(0,123,255,0.25), transparent 70%)`,
           mixBlendMode: "screen",
-          transition: "background 0.05s linear",
         }}
       />
 
-      {/* Overlay for subtle dark effect */}
+      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
-      {/* Navbar */}
-      <header className="relative z-10 container mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Image src="/logo.png" alt="WebDevSolution Logo" width={40} height={40} />
-          <span className="text-white text-xl font-bold">WebDevSolution</span>
+      {/* ================= NAVBAR ================= */}
+      <header
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? "bg-black/80 backdrop-blur-md shadow-lg" : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="WebDevSolution Logo"
+              width={38}
+              height={38}
+              className="rounded-full"
+            />
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4 }}
+              className="text-white text-lg sm:text-xl md:text-2xl font-bold tracking-wide"
+            >
+              WebDevSolution
+            </motion.span>
+          </div>
+
+          {/* Desktop Menu */}
+          <nav className="hidden md:flex gap-6 lg:gap-10 text-white font-medium">
+            {["Home", "Services", "Portfolio", "Contact"].map((item) => (
+              <motion.a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                whileHover={{ scale: 1.1, color: "#60A5FA" }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="relative group text-base lg:text-lg"
+              >
+                {item}
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+              </motion.a>
+            ))}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-white focus:outline-none"
+          >
+            {isOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
         </div>
-        <nav className="flex gap-6 text-white font-medium">
-          <a href="#home" className="hover:text-blue-400 transition">Home</a>
-          <a href="#services" className="hover:text-blue-400 transition">Services</a>
-          <a href="#portfolio" className="hover:text-blue-400 transition">Portfolio</a>
-          <a href="#contact" className="hover:text-blue-400 transition">Contact</a>
-        </nav>
+
+        {/* Mobile Dropdown */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.nav
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden bg-black/95 backdrop-blur-lg border-t border-white/10"
+            >
+              <ul className="flex flex-col items-center gap-6 py-6 text-white font-medium text-lg">
+                {["Home", "Services", "Portfolio", "Contact"].map((item) => (
+                  <li key={item}>
+                    <a
+                      href={`#${item.toLowerCase()}`}
+                      onClick={() => setIsOpen(false)}
+                      className="hover:text-blue-400 transition"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* Hero Content */}
-      <section className="relative z-10 flex flex-col items-center justify-center text-center h-screen px-6">
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative z-10 flex flex-col items-center justify-center text-center h-screen px-6 sm:px-8">
         <motion.h1
-          className="text-4xl md:text-6xl font-extrabold text-white mb-4"
-          initial={{ opacity: 0, y: 150 }}
+          className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight"
+          initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Building Smart Digital Solutions
+          Building Smart <br className="hidden sm:block" /> Digital Solutions
         </motion.h1>
+
         <motion.p
-          className="text-gray-300 text-lg md:text-xl max-w-2xl mb-8"
+          className="text-gray-300 text-base sm:text-lg md:text-xl max-w-xl md:max-w-2xl mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          From websites to design & media, we help you grow.
+          From websites to design & media, we help your business grow and stand
+          out in the digital world.
         </motion.p>
+
         <motion.a
           href="#contact"
-          className="px-6 py-3 bg-blue-500 text-white font-medium rounded-full shadow-lg hover:bg-blue-600 transition"
+          className="px-6 py-3 sm:px-8 sm:py-4 bg-blue-500 text-white font-medium rounded-full shadow-lg hover:bg-blue-600 transition text-sm sm:text-base"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.5 }}
@@ -184,8 +263,6 @@ export default function HeroSection() {
           Get Started
         </motion.a>
       </section>
-
-      
     </div>
 
      <section
